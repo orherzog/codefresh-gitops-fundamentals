@@ -1,0 +1,6 @@
+# Kubernetes & Helm specific
+.idea/
+*.log
+*.tgz
+.DS_Store
+
