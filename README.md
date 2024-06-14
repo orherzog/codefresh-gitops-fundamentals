@@ -85,13 +85,25 @@ kubectl -n argocd get secret argocd-initial-admin-secret -o jsonpath="{.data.pas
 - Create an .env file, in your project directory. This file will contain key-value pairs of your environment variables:
 
 ```bash
+nano .env
+
 # .env file
-APP_NAME=my-app
+APP_NAME=nginx
 PROJECT=default
 GIT_REPO=https://github.com/orherzog/codefresh-gitops-fundamentals.git
 APP_FOLDER=manifests
 NAMESPACE=default
 SERVER_URL=https://kubernetes.default.svc
+```
+
+- Apply the .env file
+```bash
+source .env
+```
+
+- Add remote repository to ArgoCD
+```bash
+argocd repo add https://github.com/orherzog/codefresh-gitops-fundamentals.git --username "myusername" --password "git-token"
 ```
 - Create ArgoCD application:
 
