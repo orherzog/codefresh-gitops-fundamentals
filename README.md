@@ -27,7 +27,7 @@ kubectl port-forward svc/argocd-server -n argocd 8080:443
 
 ### Expose Argo using port-forward
 ```bash
-kubectl port-forward svc/argocd-server -n argocd 8080:443
+kubectl port-forward svc/argocd-server -n argocd 8080:443 &
 ```
 
 ### Expose Argo using service with Nodeport
