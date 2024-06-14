@@ -115,3 +115,43 @@ argocd app create $APP_NAME \
 --dest-namespace $NAMESPACE \
 --dest-server $SERVER_URL
 ```
+
+## Verify that the application was installed successfully
+
+```bash
+argocd app get nginx
+```
+
+Expected results:
+```bash
+Name:               argocd/nginx
+Project:            default
+Server:             https://kubernetes.default.svc
+Namespace:          default
+URL:                https://argocd.example.com/applications/nginx
+Source:
+- Repo:             https://github.com/orherzog/codefresh-gitops-fundamentals.git
+  Target:           
+  Path:             manifests
+SyncWindow:         Sync Allowed
+Sync Policy:        Manual
+Sync Status:        Synced to  (76f37aa)
+Health Status:      Healthy
+
+GROUP  KIND        NAMESPACE  NAME              STATUS  HEALTH   HOOK  MESSAGE
+       Service     default    nginx-service     Synced  Healthy        service/nginx-service created
+apps   Deployment  default    nginx-deployment  Synced  Healthy        deployment.apps/nginx-deployment unchanged
+```
+
+## Synchronizing an Argo CD application
+
+```bash
+argocd app sync nginx
+```
+
+This synchronizes the application. To confirm it’s running, you can execute a kubectl command:
+```bash
+kubectl get all
+```
+
+* The application will have a status “Running” if synchronized successfully.
