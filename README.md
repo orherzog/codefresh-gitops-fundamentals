@@ -1,10 +1,28 @@
 # codefresh-gitops-fundamentals
 
-Notes from Codefresh GitOps Fundamentals Course Practice
+Notes that I summerized from the Codefresh GitOps Fundamentals Course
 
 ## Table of Contents
 
 - [ArgoCD installation on Minikube](#argocd-installation-on-minikube)
+- [ArgoCD CLI Installation](#argocd-cli-installation)
+- [Login to ArgoCD using admin user](#login-to-argocd-using-admin-user)
+- [Add remote repository to ArgoCD](#add-remote-repository-to-argocd)
+- [Creating an Argo CD application](#creating-an-argo-cd-application)
+- [Declarative Application Setup](#declarative-application-setup)
+- [Verify application status](#verify-application-status)
+- [Synchronizing an Argo CD application](#synchronizing-an-argo-cd-application)
+- [Argo CD auto-sync](#argo-cd-auto-sync)
+- [Git Webhook to trigger Argo sync](#git-webhook-to-trigger-argo-sync)
+- [Application Health](#application-health)
+- [Manual or automatic sync Strategies](#manual-or-automatic-sync-strategies)
+- [Auto-pruning](#auto-pruning)
+- [Self-heal](#self-heal)
+- [Managing Secrets](#managing-secrets)
+- [App of Apps](#app-of-apps)
+- [Helm support](#helm-support)
+- [Progressive Delivery](#progressive-delivery)
+- [Argo Rollouts](#argo-rollouts)
 
 ## ArgoCD intallation on minikube
 
@@ -51,7 +69,7 @@ spec:
   type: NodePort
 ```
 
-## Use local helm chart directory
+### Use local helm chart directory
 ```bash 
 mkdir argocd
 cd argocd
@@ -60,27 +78,54 @@ cd ..
 rm -rf argo-helm
 ```
 
-## Install ArgoCD CLI
-```bash 
-# On macOS
-brew install argocd
+## ArgoCD CLI Installation
 
-# On Linux
+On macOS using homebrew:
+```bash 
+brew install argocd
+```
+
+On Linux using the source code:
+```bash
 sudo curl -sSL -o /usr/local/bin/argocd https://github.com/argoproj/argo-cd/releases/latest/download/argocd-linux-amd64
 sudo chmod +x /usr/local/bin/argocd
 ```
 
 ## Login to ArgoCD using admin user
+
+
+For both ways you should enter the following credentials:
+* First you should retrive the admin password from the secret -
+```bash
+kubectl -n argocd get secret argocd-initial-admin-secret -o jsonpath="{.data.password}" | base64 -d
+```
+* Then when you login using one of the following ways (depends on the expose of the Argo UI) -
+
+[#] Login to Argo using the port forward method:
+
 ```bash 
 argocd login localhost:8080 --insecure
 ```
-- Username: admin
-- Password: G5dm2hKkwTqOLC0t (Retrive from the kubernets secret that was created using the installation)
-```bash 
-kubectl -n argocd get secret argocd-initial-admin-secret -o jsonpath="{.data.password}" | base64 -d
+[#] Login to Argo using the service expose method:
+
+```bash
+argocd login localhost:30443 --insecure
 ```
 
-## Creating an Argo CD application with the argocd CLI
+* Then enter the credntials 
+```bash
+- Username: admin
+- Password: G5dm2hKkwTqOLC0t (The values that was retrived from the kubernets secret)
+```
+
+## Add remote repository to ArgoCD
+
+In order to use the remote git, you should add it to the Argo instance using username/password method (There are other methods as well). This is done by creatiing a git token from your account.
+```bash
+argocd repo add https://github.com/orherzog/codefresh-gitops-fundamentals.git --username "myusername" --password "git-token"
+```
+
+## Creating an Argo CD application
 
 - Create an .env file, in your project directory. This file will contain key-value pairs of your environment variables:
 
@@ -101,10 +146,6 @@ SERVER_URL=https://kubernetes.default.svc
 source .env
 ```
 
-- Add remote repository to ArgoCD
-```bash
-argocd repo add https://github.com/orherzog/codefresh-gitops-fundamentals.git --username "myusername" --password "git-token"
-```
 - Create ArgoCD application:
 
 ```bash
@@ -139,7 +180,7 @@ spec:
 
 This file has the same information as defined from the Argo CD UI. But since it is a standard Kubernetes resource, you can use all your favorite tools for Kubernetes resources including committing it to Git and managing it with Argo CD.
 
-## Verify that application was installed successfully
+## Verify application status
 
 ```bash
 argocd app get nginx
@@ -248,7 +289,7 @@ Auto-pruning defines what Argo CD does when you remove/delete files from Git.
 Self-heal defines what Argo CD does when you make changes directly to the cluster (via kubectl or any other way). 
  * If enabled, then Argo CD will discard the extra changes and bring the cluster back to the state described in Git.
 
- ## Managing Secrets
+## Managing Secrets
 
 Argo CD can be used with any secret solution that you already have deployed.
 
