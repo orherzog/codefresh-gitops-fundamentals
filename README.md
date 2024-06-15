@@ -116,7 +116,30 @@ argocd app create $APP_NAME \
 --dest-server $SERVER_URL
 ```
 
-## Verify that the application was installed successfully
+## Declarative Application Setup
+
+Argo CD comes with its own custom resources that can be stored in Git, and applied in a cluster using kubectl or even better Argo CD itself.
+
+* For exmaple:
+```bash
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: canary-demo
+spec:
+  destination:
+    server: 'https://kubernetes.default.svc' 
+    namespace: demo
+  project: default
+  source:
+    repoURL: 'https://github.com/kostis-codefresh/summer-of-k8s-app-manifests
+    path: ./
+    targetRevision: HEAD
+```
+
+This file has the same information as defined from the Argo CD UI. But since it is a standard Kubernetes resource, you can use all your favorite tools for Kubernetes resources including committing it to Git and managing it with Argo CD.
+
+## Verify that application was installed successfully
 
 ```bash
 argocd app get nginx
@@ -230,3 +253,39 @@ Self-heal defines what Argo CD does when you make changes directly to the cluste
 Argo CD can be used with any secret solution that you already have deployed.
 
 All solutions that handle secrets using Git are storing them in an encrypted form. This means that you can get the best of both worlds. Secrets can be managed with GitOps, and they can also be placed in a secure manner in any Git repository (even public repositories).
+
+## App of Apps
+
+ArgoCD can manage any kind of Kubernetes resources and this includes its own applications (inception).
+
+So we can commit multiple applications in Git and pass them to ArgoCD like any other kind of manifest. This means that we can handle multiple applications as a single one.
+
+## Helm support
+
+Something important to note is that Argo CD provides native support for Helm, meaning you can directly connect a packaged Helm chart and Argo CD will monitor it for new versions. When this takes place, the Helm chart will no longer function as a Helm chart and instead, is rendered with the Helm template when Argo is installed, using the Argo CD application manifest.
+
+Argo CD then deploys and monitors the application components until both states are identical. The application is no longer a Helm application and is now recognized as an Argo app that can only operated by Argo CD. Hence if you execute the helm list command, you should no longer be able to view your helm release because the Helm metadata no longer exists.
+
+## Progressive Delivery
+
+Progressive Delivery is the practice of deploying an application in a gradual manner allowing for minimum downtime and easy rollbacks. There are several forms of progressive delivery such as blue/green, canary, a/b and feature flags.
+
+Note that canary deployments are more advanced than blue/green ones and are also more complex to set up. The load balancer is now much smarter as it can handle two streams of traffic at the same time with different destinations of different weights. You also need a way (usually an API) to instruct the load balancer to change the weight distribution of the traffic streams. If you are just getting started with progressive delivery, we suggest you master blue/green deployments first, before adopting canary ones.
+
+## Argo Rollouts
+
+Argo Rollouts is a progressive delivery controller created for Kubernetes. It allows you to deploy your application with minimal/zero downtime by adopting a gradual way of deploying instead of taking an “all at once” approach.
+
+```bash
+  strategy:
+    blueGreen:    
+      activeService: rollout-bluegreen-active  
+      previewService: rollout-bluegreen-preview    
+      autoPromotionEnabled: false
+```
+
+* activeService specifies the service to update with the new template hash at time of promotion. This field is mandatory for the blueGreen update strategy. 
+
+* previewService specifies the service to update with the new template hash before promotion. This allows the preview stack to be reachable without serving production traffic. This field is optional.    
+
+* autoPromotionEnabled disables automated promotion of the new stack by pausing the rollout immediately before the promotion. If omitted, the default behavior is to promote the new stack as soon as the ReplicaSet are completely ready/available. Rollouts can be resumed using: `kubectl argo rollouts promote ROLLOUT`  
